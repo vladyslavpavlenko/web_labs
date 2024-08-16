@@ -1,0 +1,67 @@
+version: '3'
+
+services:
+  front-end:
+    image: vladyslavpavlenko/front-end:1.0.3
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      BROKER_URL: "http://backend"
+
+  broker-service:
+    image: vladyslavpavlenko/broker-service:1.0.2
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  listener-service:
+    image: vladyslavpavlenko/listener-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  logger-service:
+    image: vladyslavpavlenko/logger-service:1.0.1
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  rabbitmq:
+    image: 'rabbitmq:3.9-alpine'
+    deploy:
+      mode: global
+
+  mongo:
+    image: "mongo:4.2.17-bionic"
+    ports:
+      - "27017:27017"
+    deploy:
+      mode: global
+    environment:
+      MONGO_INITDB_DATABASE: logs
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - ./db-data/mongo/:/data/db
+
+  postgres:
+    image: 'postgres:14.2'
+    ports:
+      - "5432:5432"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users
+    volumes:
+      - ./db-data/postgres/:/var/lib/postgresql/data/
+
+volumes:
+  caddy_data:
+    external: true
+
+  caddy_config:
+    external: true
