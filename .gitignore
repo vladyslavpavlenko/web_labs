@@ -24,6 +24,7 @@ vite.config.ts.timestamp-*
 # Other
 /package
 node_modules
+db-data
 
 # Logs
 logs
@@ -46,3 +47,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# App binaries
+mailApp
+loggerServiceApp
+listenerApp
+frontEndApp
+brokerApp
