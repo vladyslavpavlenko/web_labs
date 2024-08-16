@@ -1,7 +1,8 @@
 import '@telegram-apps/telegram-ui/dist/styles.css';
 import { Text } from '@telegram-apps/telegram-ui';
 import Task from "../Task/Task";
-import { Task as TaskType } from '../../types'; // Adjust the path as necessary
+import { Task as TaskType } from '../../types';
+import {SortableContext, verticalListSortingStrategy} from "@dnd-kit/sortable"
 
 interface TasksProps {
     tasks: TaskType[];
@@ -26,9 +27,11 @@ function Tasks({ tasks, onComplete, onDelete }: TasksProps) {
                 )}
             </div>
             <div>
-                {tasks.map(task => (
-                    <Task key={task.id} task={task} onComplete={onComplete} onDelete={onDelete}/>
-                ))}
+                <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
+                    {tasks.map(task => (
+                        <Task key={task.id} task={task} onComplete={onComplete} onDelete={onDelete}/>
+                    ))}
+                </SortableContext>
             </div>
         </>
     );

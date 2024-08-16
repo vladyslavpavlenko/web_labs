@@ -2,8 +2,10 @@ import '@telegram-apps/telegram-ui/dist/styles.css';
 import { AppRoot, Placeholder } from '@telegram-apps/telegram-ui';
 import Tasks from "./components/Tasks/Tasks.tsx";
 import Header from "./components/Header/Header.tsx";
-import {useState, useEffect} from "react";
-import {Task} from "./types.ts";
+import { useState, useEffect } from "react";
+import { Task } from "./types.ts";
+import { closestCorners, DndContext, DragEndEvent, MouseSensor, useSensor, useSensors, UniqueIdentifier } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 
 const LOCAL_STORAGE_KEY = "todo:savedTasks";
 
@@ -28,12 +30,12 @@ function App() {
 
     function addTask(taskTitle: string): void {
         setTasksAndSave([
-            ...tasks,
             {
                 id: crypto.randomUUID(),
                 title: taskTitle,
                 isCompleted: false,
             },
+            ...tasks,
         ]);
     }
 
@@ -56,6 +58,31 @@ function App() {
         setTasksAndSave(newTasks);
     }
 
+    const getTaskIndex = (id: UniqueIdentifier) => tasks.findIndex(task => task.id === id as string);
+
+    const reorderTasks = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (!over || active.id === over.id) return; // Check if over is null and if active and over are the same
+
+        const originalPos = getTaskIndex(active.id);
+        const newPos = getTaskIndex(over.id);
+
+        if (originalPos !== -1 && newPos !== -1) {
+            const newTasks = arrayMove(tasks, originalPos, newPos);
+            setTasksAndSave(newTasks);
+        }
+    };
+
+    const sensors = useSensors(
+        useSensor(MouseSensor, {
+            activationConstraint: {
+                delay: 250,
+                tolerance: 10,
+            },
+        })
+    );
+
     return (
         <AppRoot style={{ minWidth: 500 }}>
             <Placeholder
@@ -70,9 +97,11 @@ function App() {
             </Placeholder>
 
             <Header onAddTask={addTask} />
-            <Tasks tasks={tasks} onComplete={toggleTaskCompletedByID} onDelete={deleteTaskByID} />
+            <DndContext collisionDetection={closestCorners} onDragEnd={reorderTasks} sensors={sensors}>
+                <Tasks tasks={tasks} onComplete={toggleTaskCompletedByID} onDelete={deleteTaskByID} />
+            </DndContext>
         </AppRoot>
-    )
+    );
 }
 
-export default App
+export default App;
