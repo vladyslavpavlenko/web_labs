@@ -16,6 +16,15 @@
     border-style: none;
 }
 
+.brushsize-container {
+    display: inline;
+    margin-left: 12px;
+}
+
+.tools-container {
+    text-align: center;
+}
+
 .board-container {
     width: calc(100% - 2%);
     height: calc(100% - 5% - 25px);
