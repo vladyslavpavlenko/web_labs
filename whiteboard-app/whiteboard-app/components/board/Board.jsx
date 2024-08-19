@@ -43,6 +43,7 @@ class Board extends React.Component {
 
     componentWillUnmount() {
         window.removeEventListener('resize', this.updateCanvasSize.bind(this));
+        window.removeEventListener('mouseup', this.handleMouseUp.bind(this));
     }
 
     componentWillReceiveProps(newProps) {
@@ -83,15 +84,15 @@ class Board extends React.Component {
         this.ctx.lineCap = 'round';
 
         canvas.addEventListener('mousedown', () => {
+            this.isDrawing = true;
             canvas.addEventListener('mousemove', onPaint, false);
         }, false);
 
-        canvas.addEventListener('mouseup', () => {
-            canvas.removeEventListener('mousemove', onPaint, false);
-        }, false);
+        window.addEventListener('mouseup', this.handleMouseUp.bind(this), false);
 
         const root = this;
         const onPaint = function() {
+            if (!root.isDrawing) return;
             root.ctx.beginPath();
             root.ctx.moveTo(last_mouse.x, last_mouse.y);
             root.ctx.lineTo(mouse.x, mouse.y);
@@ -103,8 +104,14 @@ class Board extends React.Component {
                 const base64ImageData = canvas.toDataURL('image/png');
                 root.socket.emit('canvas-data', base64ImageData);
                 root.saveCanvas(base64ImageData);
-            }, 200);
+            }, 10);
         };
+    }
+
+    handleMouseUp() {
+        this.isDrawing = false;
+        const canvas = document.querySelector('#board');
+        canvas.removeEventListener('mousemove', this.onPaint, false);
     }
 
     saveCanvas(imageData) {
