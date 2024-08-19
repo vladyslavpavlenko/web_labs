@@ -1,0 +1,26 @@
+.container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ededed;
+    margin: 0;
+    padding: 0;
+}
+
+.color-picker-container {
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-style: none;
+}
+
+.board-container {
+    width: calc(100% - 2%);
+    height: calc(100% - 5% - 25px);
+    margin: auto;
+    border-radius: 0.25rem;
+    background-color: white;
+    border: solid 1px lightgray;
+}
