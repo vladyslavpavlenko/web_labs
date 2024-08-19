@@ -63,7 +63,7 @@ brokerApp
 /coverage
 
 # next.js
-/.next/
+.next/
 /out/
 
 # misc
