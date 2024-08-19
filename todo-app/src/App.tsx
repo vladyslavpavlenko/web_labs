@@ -1,13 +1,16 @@
 import '@telegram-apps/telegram-ui/dist/styles.css';
 import { AppRoot, Placeholder } from '@telegram-apps/telegram-ui';
-import Tasks from "./components/Tasks/Tasks.tsx";
-import Header from "./components/Header/Header.tsx";
+import Tasks from "./components/Tasks/Tasks";
+import Header from "./components/Header/Header";
 import { useState, useEffect } from "react";
-import { Task } from "./types.ts";
+import { Task } from "./types";
 import { closestCorners, DndContext, DragEndEvent, MouseSensor, useSensor, useSensors, UniqueIdentifier } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 
 const LOCAL_STORAGE_KEY = "todo:savedTasks";
+const PORT = 8080
+
+const ws = new WebSocket('ws://localhost:' + PORT);
 
 function App() {
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -15,28 +18,47 @@ function App() {
     function loadSaveTasks() {
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (saved) {
-            setTasks(JSON.parse(saved));
+            try {
+                const parsedTasks = JSON.parse(saved);
+                if (Array.isArray(parsedTasks)) {
+                    setTasks(parsedTasks);
+                } else {
+                    setTasks([]);
+                }
+            } catch (error) {
+                console.error("Error parsing saved tasks:", error);
+                setTasks([]);
+            }
+        } else {
+            setTasks([]);
         }
+    }
+
+    function setTasksAndSync(newTasks: Task[]): void {
+        setTasks(newTasks);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newTasks));
+        ws.send(JSON.stringify({ type: 'update', tasks: newTasks }));
     }
 
     useEffect(() => {
         loadSaveTasks();
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'update') {
+                setTasks(data.tasks);
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data.tasks));
+            }
+        };
     }, []);
 
-    function setTasksAndSave(newTasks: Task[]): void {
-        setTasks(newTasks);
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newTasks));
-    }
-
     function addTask(taskTitle: string): void {
-        setTasksAndSave([
-            {
-                id: crypto.randomUUID(),
-                title: taskTitle,
-                isCompleted: false,
-            },
-            ...tasks,
-        ]);
+        const newTask = {
+            id: crypto.randomUUID(),
+            title: taskTitle,
+            isCompleted: false,
+        };
+        setTasksAndSync([newTask, ...tasks]);
     }
 
     function toggleTaskCompletedByID(taskID: string): void {
@@ -45,17 +67,16 @@ function App() {
                 return {
                     ...task,
                     isCompleted: !task.isCompleted,
-                }
+                };
             }
-
             return task;
         });
-        setTasksAndSave(newTasks);
+        setTasksAndSync(newTasks);
     }
 
     function deleteTaskByID(taskID: string): void {
         const newTasks = tasks.filter(task => task.id !== taskID);
-        setTasksAndSave(newTasks);
+        setTasksAndSync(newTasks);
     }
 
     const getTaskIndex = (id: UniqueIdentifier) => tasks.findIndex(task => task.id === id as string);
@@ -63,14 +84,14 @@ function App() {
     const reorderTasks = (event: DragEndEvent) => {
         const { active, over } = event;
 
-        if (!over || active.id === over.id) return; // Check if over is null and if active and over are the same
+        if (!over || active.id === over.id) return;
 
         const originalPos = getTaskIndex(active.id);
         const newPos = getTaskIndex(over.id);
 
         if (originalPos !== -1 && newPos !== -1) {
             const newTasks = arrayMove(tasks, originalPos, newPos);
-            setTasksAndSave(newTasks);
+            setTasksAndSync(newTasks);
         }
     };
 
