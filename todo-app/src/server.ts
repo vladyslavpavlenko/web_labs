@@ -1,5 +1,3 @@
-// ts-node ./src/server.ts
-
 import { WebSocketServer } from 'ws';
 
 const PORT = 8080
