@@ -7,18 +7,27 @@ class Board extends React.Component {
     socket = io.connect("http://localhost:8080");
 
     ctx;
+    isDrawing = false;
 
     constructor(props) {
         super(props);
 
         this.socket.on("canvas-data", function(data){
-            const image = new Image();
-            const canvas = document.querySelector("#board");
-            const ctx = canvas.getContext("2d");
-            image.onload = function() {
-                ctx.drawImage(image, 0, 0);
-            };
-            image.src = data;
+            const root = this;
+            const interval = setInterval(function(){
+                if (root.isDrawing) return;
+                root.isDrawing = true;
+                clearInterval(interval);
+
+                const image = new Image();
+                const canvas = document.querySelector("#board");
+                const ctx = canvas.getContext("2d");
+                image.onload = function() {
+                    ctx.drawImage(image, 0, 0);
+                    root.isDrawing = false;
+                };
+                image.src = data;
+            }, 200)
         })
     }
 
