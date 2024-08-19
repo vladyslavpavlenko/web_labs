@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('cors');
+const cors = require('cors'); // Import cors middleware
 
 const app = express();
 const http = require('http').createServer(app);
@@ -19,6 +19,14 @@ io.on('connection', (socket) => {
 
     socket.on('canvas-data', (data) => {
         socket.broadcast.emit('canvas-data', data);
+    });
+
+    socket.on('clear-canvas', () => {
+        socket.broadcast.emit('clear-canvas');
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Client disconnected!');
     });
 });
 
