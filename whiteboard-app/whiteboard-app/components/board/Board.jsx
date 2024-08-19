@@ -1,11 +1,23 @@
 import React from "react";
+import io from "socket.io-client";
 import "./style.css";
 
 class Board extends React.Component {
     timeout;
+    socket = io.connect("http://localhost:8080");
 
     constructor(props) {
         super(props);
+
+        this.socket.on("canvas-data", function(data){
+            const image = new Image();
+            const canvas = document.querySelector("#board");
+            const ctx = canvas.getContext("2d");
+            image.onload = function() {
+                ctx.drawImage(image, 0, 0);
+            };
+            image.src = data;
+        })
     }
 
     componentDidMount() {
@@ -38,7 +50,7 @@ class Board extends React.Component {
         ctx.lineCap = 'round';
         ctx.strokeStyle = 'blue';
 
-        canvas.addEventListener('mousedown', function(e) {
+        canvas.addEventListener('mousedown', function() {
             canvas.addEventListener('mousemove', onPaint, false);
         }, false);
 
@@ -57,7 +69,8 @@ class Board extends React.Component {
             if (root.timeout !== undefined) clearTimeout(root.timeout);
             root.timeout = setTimeout(function (){
                 const base64ImageData = canvas.toDataURL('image/png');
-            }, 1000);
+                root.socket.emit('canvas-data', base64ImageData);
+            }, 200);
         };
     }
 
